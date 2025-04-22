@@ -1,12 +1,22 @@
-# React + Vite
+# NFT Marketplace Project
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Team Members
+- PES1UG22CS399  
+- PES1UG22CCS624  
+- PES1UG22CS629  
+- PES1UG22CS662  
 
-Currently, two official plugins are available:
+## 🚀 Features
+- **Mint NFTs:** Anyone can mint a new NFT by providing metadata and royalty percentage (up to 10%).
+- **List NFTs:** After minting, NFTs can be listed for sale on the marketplace.
+- **Buy NFTs:** Users can purchase listed NFTs, and the original creator will receive royalties on each sale.
+- **Transfer NFTs:** NFT owners can directly transfer their NFTs to another wallet.
+- **Withdraw NFTs:** Sellers can remove (withdraw) their NFTs from the marketplace listings.
+- **Royalties System:** Creators receive a royalty (max 10%) every time the NFT is resold.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠️ Getting Started
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Clone the repository:
+```bash
+git clone https://github.com/Suhas-30/NFT_Marketplace.git
+cd NFT_Marketplace
