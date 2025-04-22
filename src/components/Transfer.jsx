@@ -1,46 +1,15 @@
-import React, { useState, useEffect } from 'react';
-
-// import { transferNFT, fetchOwnedNFTs } from '../solidityfunction/transfer';
-
+import React, { useState } from 'react';
+import { useWallet } from "../context/WalletContext";
+import { transferNFT } from '../solidityfunction/transfer';
 
 const Transfer = () => {
+  const { currentAccount } = useWallet();
   const [tokenId, setTokenId] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingNFTs, setLoadingNFTs] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [transactionHash, setTransactionHash] = useState('');
-  const [ownedNFTs, setOwnedNFTs] = useState([]);
-  const [selectedNFT, setSelectedNFT] = useState(null);
-
-  // Load user's owned NFTs when component mounts
-  useEffect(() => {
-    loadOwnedNFTs();
-  }, []);
-
-  const loadOwnedNFTs = async () => {
-    try {
-      setLoadingNFTs(true);
-      const nfts = await fetchOwnedNFTs();
-      setOwnedNFTs(nfts);
-    } catch (err) {
-      console.error("Error loading owned NFTs:", err);
-      setError("Failed to load your NFTs. Please try again later.");
-    } finally {
-      setLoadingNFTs(false);
-    }
-  };
-
-  // Update selected NFT when tokenId changes
-  useEffect(() => {
-    if (tokenId) {
-      const nft = ownedNFTs.find(nft => nft.tokenId === tokenId);
-      setSelectedNFT(nft || null);
-    } else {
-      setSelectedNFT(null);
-    }
-  }, [tokenId, ownedNFTs]);
+  const [txHash, setTxHash] = useState('');
 
   const handleTransfer = async (e) => {
     e.preventDefault();
@@ -48,11 +17,16 @@ const Transfer = () => {
     // Reset state
     setError('');
     setSuccessMessage('');
-    setTransactionHash('');
+    setTxHash('');
+    
+    if (!currentAccount) {
+      setError("Please connect your wallet first");
+      return;
+    }
     
     // Validate inputs
     if (!tokenId) {
-      setError("Please select an NFT to transfer");
+      setError("Please enter an NFT Token ID");
       return;
     }
     
@@ -67,131 +41,91 @@ const Transfer = () => {
     }
     
     try {
-      setIsLoading(true);
+      setLoading(true);
       
       // Execute the transfer
       const result = await transferNFT(tokenId, recipientAddress);
       
       // Set transaction hash immediately for user feedback
-      setTransactionHash(result.transactionHash);
+      setTxHash(result.transactionHash);
       setSuccessMessage(`Success! NFT with ID ${tokenId} transferred to ${recipientAddress}`);
       
-      // Reset form values and update NFT list
+      // Reset form values
       setTokenId('');
       setRecipientAddress('');
-      setSelectedNFT(null);
-      await loadOwnedNFTs();
       
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to transfer NFT. Please try again.");
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Render NFT image based on metadata
-  const renderNFTImage = (metadata) => {
-    try {
-      let imageUrl = null;
-      
-      // If metadata is a string containing JSON
-      if (typeof metadata === 'string' && metadata.startsWith('{')) {
-        const parsedData = JSON.parse(metadata);
-        imageUrl = parsedData.image || parsedData.external_link;
-      } 
-      // If metadata is already an object
-      else if (typeof metadata === 'object' && metadata !== null) {
-        imageUrl = metadata.image || metadata.external_link;
-      }
-      
-      if (imageUrl) {
-        return <img src={imageUrl} alt="NFT" className="w-full h-48 object-cover rounded-md" />;
-      }
-      
-      return <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md">No Image</div>;
-    } catch (err) {
-      console.error("Error rendering NFT image:", err);
-      return <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md">Image Error</div>;
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <h2 className="text-2xl font-bold mb-6">Transfer Your NFT</h2>
+    <div style={{ padding: "2rem", maxWidth: "500px", margin: "auto" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1.5rem" }}>Transfer Your NFT</h2>
       
       {error && (
-        <div className="p-3 mb-4 bg-red-50 text-red-700 border border-red-200 rounded-md">
+        <div style={{ 
+          padding: "0.75rem", 
+          marginBottom: "1rem", 
+          backgroundColor: "#FEECED", 
+          color: "#D32F2F", 
+          border: "1px solid #FECDD0", 
+          borderRadius: "4px" 
+        }}>
           {error}
         </div>
       )}
       
       {successMessage && (
-        <div className="p-3 mb-4 bg-green-50 text-green-700 border border-green-200 rounded-md">
+        <div style={{ 
+          padding: "0.75rem", 
+          marginBottom: "1rem", 
+          backgroundColor: "#e8f5e9", 
+          color: "#43a047", 
+          border: "1px solid #c8e6c9", 
+          borderRadius: "4px" 
+        }}>
           {successMessage}
         </div>
       )}
       
-      {/* NFT Selection */}
-      <div className="mb-6">
-        <label className="block mb-2 font-medium">Select NFT to Transfer</label>
-        
-        {loadingNFTs ? (
-          <div className="p-4 text-center">Loading your NFTs...</div>
-        ) : ownedNFTs.length === 0 ? (
-          <div className="p-4 text-center bg-gray-50 rounded-md">
-            You don't own any NFTs to transfer
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {ownedNFTs.map((nft) => (
-              <div 
-                key={nft.tokenId}
-                className={`border rounded-md overflow-hidden cursor-pointer transition ${
-                  tokenId === nft.tokenId ? 'ring-2 ring-blue-500' : 'hover:shadow-md'
-                }`}
-                onClick={() => setTokenId(nft.tokenId)}
-              >
-                <div className="h-36">
-                  {renderNFTImage(nft.metadata)}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-medium">{nft.metadata?.name || `NFT #${nft.tokenId}`}</h3>
-                  <p className="text-sm text-gray-500">Token ID: {nft.tokenId}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {!currentAccount && (
+        <div style={{ color: "red", marginBottom: "1rem" }}>
+          Please connect your wallet before transferring NFTs
+        </div>
+      )}
       
-      {/* Transfer Form */}
-      <form onSubmit={handleTransfer} className="border rounded-lg p-4 bg-gray-50">
-        {/* Selected NFT Preview */}
-        {selectedNFT && (
-          <div className="mb-4 p-3 bg-white rounded-md">
-            <h3 className="font-medium mb-2">Selected NFT:</h3>
-            <div className="flex items-center">
-              <div className="w-16 h-16 mr-3 overflow-hidden rounded-md">
-                {renderNFTImage(selectedNFT.metadata)}
-              </div>
-              <div>
-                <p className="font-medium">{selectedNFT.metadata?.name || `NFT #${selectedNFT.tokenId}`}</p>
-                <p className="text-sm text-gray-500">Token ID: {selectedNFT.tokenId}</p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Token ID field (hidden but still part of the form) */}
-        <input
-          type="hidden"
-          value={tokenId}
-          onChange={(e) => setTokenId(e.target.value)}
-        />
+      <form onSubmit={handleTransfer} style={{ 
+        border: "1px solid #e0e0e0", 
+        borderRadius: "8px", 
+        padding: "1.5rem", 
+        backgroundColor: "#f9f9f9" 
+      }}>
+        {/* Token ID Input */}
+        <div style={{ marginBottom: "1rem" }}>
+          <label htmlFor="tokenId" style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>
+            NFT Token ID
+          </label>
+          <input
+            id="tokenId"
+            type="text"
+            placeholder="Enter token ID"
+            value={tokenId}
+            onChange={(e) => setTokenId(e.target.value)}
+            required
+            style={{ width: "100%", padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            disabled={loading}
+          />
+          <p style={{ fontSize: "0.875rem", color: "#666", marginTop: "0.25rem" }}>
+            Enter the ID of the NFT you want to transfer
+          </p>
+        </div>
         
         {/* Recipient Address */}
-        <div className="mb-4">
-          <label htmlFor="recipientAddress" className="block mb-2 font-medium">
+        <div style={{ marginBottom: "1rem" }}>
+          <label htmlFor="recipientAddress" style={{ display: "block", marginBottom: "0.5rem", fontWeight: "500" }}>
             Recipient Address
           </label>
           <input
@@ -201,10 +135,10 @@ const Transfer = () => {
             value={recipientAddress}
             onChange={(e) => setRecipientAddress(e.target.value)}
             required
-            className="w-full p-2 border rounded-md"
-            disabled={isLoading}
+            style={{ width: "100%", padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            disabled={loading}
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p style={{ fontSize: "0.875rem", color: "#666", marginTop: "0.25rem" }}>
             Enter the Ethereum address of the recipient
           </p>
         </div>
@@ -212,28 +146,56 @@ const Transfer = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading || !tokenId}
-          className={`w-full py-3 rounded-md font-medium 
-            ${isLoading || !tokenId 
-              ? 'bg-gray-300 cursor-not-allowed' 
-              : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+          disabled={loading || !currentAccount || !tokenId || !recipientAddress}
+          style={{ 
+            width: "100%", 
+            padding: "0.75rem 1.5rem", 
+            borderRadius: "4px",
+            fontWeight: "500",
+            backgroundColor: (loading || !currentAccount || !tokenId || !recipientAddress) 
+              ? "#cccccc" 
+              : "#2196F3",
+            color: "white",
+            border: "none",
+            cursor: (loading || !currentAccount || !tokenId || !recipientAddress) 
+              ? "not-allowed" 
+              : "pointer",
+            transition: "background-color 0.3s"
+          }}
         >
-          {isLoading ? "Processing..." : "Transfer NFT"}
+          {loading ? "Processing..." : "Transfer NFT"}
         </button>
       </form>
       
       {/* Transaction Hash Section */}
-      {transactionHash && (
-        <div className="mt-6 p-4 bg-green-50 rounded-md">
-          <p className="mb-2 font-medium">Transaction Hash:</p>
-          <p className="break-all font-mono text-sm bg-white p-2 rounded-md">
-            {transactionHash}
+      {txHash && (
+        <div style={{ 
+          marginTop: "1.5rem", 
+          padding: "1rem", 
+          backgroundColor: "#e8f5e9", 
+          borderRadius: "4px" 
+        }}>
+          <p style={{ fontWeight: "500", marginBottom: "0.5rem" }}>Transaction Hash:</p>
+          <p style={{ 
+            wordBreak: "break-all", 
+            fontFamily: "monospace", 
+            fontSize: "0.875rem", 
+            backgroundColor: "white", 
+            padding: "0.5rem", 
+            borderRadius: "4px" 
+          }}>
+            {txHash}
           </p>
           <a 
-            href={`https://sepolia.etherscan.io/tx/${transactionHash}`} 
+            href={`https://sepolia.etherscan.io/tx/${txHash}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-block mt-2 text-blue-500 hover:underline"
+            style={{ 
+              display: "inline-block", 
+              marginTop: "0.5rem",
+              color: "#2196F3",
+              textDecoration: "none"
+            }}
           >
             View on Sepolia Etherscan
           </a>

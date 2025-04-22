@@ -1,3 +1,5 @@
+// src/solidityfunction/transfer.js
+
 import { BrowserProvider, Contract } from "ethers";
 import { contractABI, contractAddress } from "../components/contractABI";
 import axios from "axios";
@@ -84,5 +86,41 @@ export const fetchOwnedNFTs = async () => {
   } catch (error) {
     console.error("Error fetching owned NFTs:", error);
     throw new Error(error.message || "Failed to load your NFTs");
+  }
+};
+
+// Transfer NFT to another address
+export const transferNFT = async (tokenId, recipientAddress) => {
+  try {
+    if (!window.ethereum) throw new Error("MetaMask is not installed!");
+    
+    // Get provider and signer
+    const provider = new BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new Contract(contractAddress, contractABI, signer);
+    
+    // Check that user owns the NFT
+    const owner = await contract.ownerOf(tokenId);
+    const userAddress = await signer.getAddress();
+    
+    if (owner.toLowerCase() !== userAddress.toLowerCase()) {
+      throw new Error("You don't own this NFT");
+    }
+    
+    // Execute transfer transaction
+    console.log(`Transferring NFT #${tokenId} to ${recipientAddress}...`);
+    const tx = await contract.transferNFT(tokenId, recipientAddress);
+    
+    // Wait for transaction to be mined
+    const receipt = await tx.wait();
+    console.log("Transfer successful:", receipt);
+    
+    return {
+      success: true,
+      transactionHash: receipt.hash
+    };
+  } catch (error) {
+    console.error("Error transferring NFT:", error);
+    throw new Error(error.message || "Failed to transfer NFT. Please try again.");
   }
 };

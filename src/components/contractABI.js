@@ -248,19 +248,6 @@ export const contractABI = [
 	},
 	{
 		"inputs": [],
-		"name": "description",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "getAllListings",
 		"outputs": [
 			{
@@ -360,19 +347,6 @@ export const contractABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "name",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -413,4 +387,4 @@ export const contractABI = [
 ]
 
 
-export const contractAddress = "0x77dD74f5d8E91ff10289517C7A0161464FD81539";
+export const contractAddress = "0x3FC94b38a8fDA19082771aF882c930ACD0161B0D";

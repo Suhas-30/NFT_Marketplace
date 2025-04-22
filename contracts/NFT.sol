@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract CustomNFT {
+contract Nft {
     struct NFT {
         uint256 id;
         address creator;
@@ -10,87 +10,79 @@ contract CustomNFT {
         uint256 royaltyPercentage;
     }
 
-    mapping(uint256 => NFT) private _nfts;
-    mapping(address => uint256) private _balances;
-    uint256 internal _tokenIdCounter;
+    mapping(uint256 => NFT) internal nfts;
+    mapping(address => uint256) internal balances;
+    uint256 internal tokenIdCounter;
 
-    string private _name;
-    string private _description;
-    bool private _collectionInitialized;
+    string private name;
+    string private description;
+    bool private collectionInitialized;
 
-    event Minted(uint256 indexed tokenId, address indexed creator, string tokenURI);
-    event Transferred(uint256 indexed tokenId, address indexed from, address indexed to);
-    event CollectionInitialized(string name, string description);
-
-    function mintNFT(
-        string memory _tokenURI,
-        uint256 _royaltyPercentage,
-        string memory name_,
-        string memory description_
+    function mintNft(
+        string memory uri,
+        uint256 royaltyPercentage,
+        string memory collectionName,
+        string memory collectionDescription
     ) external {
-        require(_royaltyPercentage <= 10, "Royalty too high!");
+        require(royaltyPercentage <= 10, "Royalty too high!");
 
-        if (!_collectionInitialized) {
-            _name = name_;
-            _description = description_;
-            _collectionInitialized = true;
-            emit CollectionInitialized(name_, description_);
+        if (!collectionInitialized) {
+            name = collectionName;
+            description = collectionDescription;
+            collectionInitialized = true;
         }
 
-        _tokenIdCounter++;
-        uint256 newTokenId = _tokenIdCounter;
+        tokenIdCounter++;
+        uint256 newTokenId = tokenIdCounter;
 
-        _nfts[newTokenId] = NFT({
+        nfts[newTokenId] = NFT({
             id: newTokenId,
             creator: msg.sender,
             owner: msg.sender,
-            tokenURI: _tokenURI,
-            royaltyPercentage: _royaltyPercentage
+            tokenURI: uri,
+            royaltyPercentage: royaltyPercentage
         });
 
-        _balances[msg.sender]++;
-        emit Minted(newTokenId, msg.sender, _tokenURI);
+        balances[msg.sender]++;
     }
 
-    function transferNFT(uint256 tokenId, address to) public {
-        require(_nfts[tokenId].owner == msg.sender, "Not the owner");
+    function transferNft(uint256 tokenId, address to) public {
+        require(exists(tokenId), "Token does not exist");
         require(to != address(0), "Invalid address");
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
 
-        address previousOwner = _nfts[tokenId].owner;
-        _nfts[tokenId].owner = to;
-
-        _balances[previousOwner]--;
-        _balances[to]++;
-        emit Transferred(tokenId, previousOwner, to);
+        address currentOwner = nfts[tokenId].owner;
+        nfts[tokenId].owner = to;
+        balances[currentOwner]--;
+        balances[to]++;
     }
 
     function ownerOf(uint256 tokenId) public view returns (address) {
-        require(_exists(tokenId), "Token does not exist");
-        return _nfts[tokenId].owner;
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId].owner;
     }
 
-    function getNFT(uint256 tokenId) public view returns (NFT memory) {
-        require(_exists(tokenId), "Token does not exist");
-        return _nfts[tokenId];
+    function getNft(uint256 tokenId) public view returns (NFT memory) {
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId];
     }
 
     function getRoyalty(uint256 tokenId) public view returns (uint256) {
-        require(_exists(tokenId), "Token does not exist");
-        return _nfts[tokenId].royaltyPercentage;
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId].royaltyPercentage;
     }
 
     function balanceOf(address owner) public view returns (uint256) {
         require(owner != address(0), "Zero address not allowed");
-        return _balances[owner];
+        return balances[owner];
     }
 
-    function tokenURI(uint256 tokenId) external view returns (string memory) {
-        require(_exists(tokenId), "Token does not exist");
-        return _nfts[tokenId].tokenURI;
+    function tokenUri(uint256 tokenId) external view returns (string memory) {
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId].tokenURI;
     }
 
-
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        return _nfts[tokenId].owner != address(0);
+    function exists(uint256 tokenId) internal view returns (bool) {
+        return nfts[tokenId].owner != address(0);
     }
 }
