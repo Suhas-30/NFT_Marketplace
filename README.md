@@ -32,3 +32,4 @@ VITE_PINATA_SECRET_KEY=your_pinata_secret_key
 VITE_PINATA_GATEWAY=your_pinata_gateway_url
 VITE_PINATA_JWT_KEY=your_pinata_jwt_key
 
+npm run dev
