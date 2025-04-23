@@ -8,29 +8,16 @@ contract Nft {
         address owner;
         string tokenURI;
         uint256 royaltyPercentage;
+        string name;
+        string description;
     }
 
     mapping(uint256 => NFT) internal nfts;
     mapping(address => uint256) internal balances;
     uint256 internal tokenIdCounter;
 
-    string private name;
-    string private description;
-    bool private collectionInitialized;
-
-    function mintNft(
-        string memory uri,
-        uint256 royaltyPercentage,
-        string memory collectionName,
-        string memory collectionDescription
-    ) external {
+    function mintNft(string memory uri, uint256 royaltyPercentage, string memory nftName,string memory nftDescription) external {
         require(royaltyPercentage <= 10, "Royalty too high!");
-
-        if (!collectionInitialized) {
-            name = collectionName;
-            description = collectionDescription;
-            collectionInitialized = true;
-        }
 
         tokenIdCounter++;
         uint256 newTokenId = tokenIdCounter;
@@ -40,10 +27,26 @@ contract Nft {
             creator: msg.sender,
             owner: msg.sender,
             tokenURI: uri,
-            royaltyPercentage: royaltyPercentage
+            royaltyPercentage: royaltyPercentage,
+            name: nftName,
+            description: nftDescription
         });
 
         balances[msg.sender]++;
+    }
+
+    function exists(uint256 tokenId) internal view returns (bool) {
+        return nfts[tokenId].owner != address(0);
+    }
+
+    function ownerOf(uint256 tokenId) public view returns (address) {
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId].owner;
+    }
+
+    function getNft(uint256 tokenId) public view returns (NFT memory) {
+        require(exists(tokenId), "Token does not exist");
+        return nfts[tokenId];
     }
 
     function transferNft(uint256 tokenId, address to) public {
@@ -57,15 +60,7 @@ contract Nft {
         balances[to]++;
     }
 
-    function ownerOf(uint256 tokenId) public view returns (address) {
-        require(exists(tokenId), "Token does not exist");
-        return nfts[tokenId].owner;
-    }
-
-    function getNft(uint256 tokenId) public view returns (NFT memory) {
-        require(exists(tokenId), "Token does not exist");
-        return nfts[tokenId];
-    }
+    
 
     function getRoyalty(uint256 tokenId) public view returns (uint256) {
         require(exists(tokenId), "Token does not exist");
@@ -82,7 +77,5 @@ contract Nft {
         return nfts[tokenId].tokenURI;
     }
 
-    function exists(uint256 tokenId) internal view returns (bool) {
-        return nfts[tokenId].owner != address(0);
-    }
+    
 }
