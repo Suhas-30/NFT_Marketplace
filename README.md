@@ -1,10 +1,6 @@
 # NFT Marketplace Project
 
-## Team Members
-- PES1UG22CS399  
-- PES1UG22CCS624  
-- PES1UG22CS629  
-- PES1UG22CS662  
+  
 
 ## 🚀 Features
 - **Mint NFTs:** Anyone can mint a new NFT by providing metadata and royalty percentage (up to 10%).
